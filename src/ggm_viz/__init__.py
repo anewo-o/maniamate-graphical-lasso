@@ -5,7 +5,7 @@ including covariance structures, precision matrices, and the graphical
 lasso algorithm.
 """
 
-from ggm_viz.graph import GaussianGraphScene
+from ggm_viz.graph import GaussianGraphScene, GraphicalLassoScene
 
 __version__ = "0.1.0"
-__all__ = ["GaussianGraphScene"]
+__all__ = ["GaussianGraphScene", "GraphicalLassoScene"]
