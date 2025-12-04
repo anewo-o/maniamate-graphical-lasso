@@ -44,47 +44,45 @@ class IntroScene(Scene):
 
         # --- 1) Quelques secondes de noir ---
         self.wait(2)
+        # --- Titre en haut ---
+        title = Text("Réseaux de gènes", font_size=48, color=YELLOW)
+        title.to_edge(UP)  # positionné en haut de l’écran
+        self.play(FadeIn(title), run_time=2)
 
-     # Tableau avec en-tête "gène1 ... gène p"
+        # --- 2) Tableau avec en-tête "gène1 ... gène p" ---
         header = [Text(f"gène {j}") for j in range(1,6)]
         rows = [[MathTex(f"x_{{{i},{j}}}") for j in range(1,6)] for i in range(1,6)]
         table = MobjectTable([header] + rows, include_outer_lines=True)
-        table.scale(0.35)        # taille fixée dès le départ
-        table.move_to(ORIGIN)   # centré
-
+        table.scale(0.35).move_to(ORIGIN)
 
         brace_p = Brace(table, UP)
         label_p = brace_p.get_text("p gènes")
 
-        # Accolade verticale uniquement sur les lignes de données
         rows_only = VGroup(*table.get_rows()[1:])  # saute l'en-tête
-        brace_n = Brace(rows_only, LEFT)
-        brace_n.shift(LEFT*0.4)
+        brace_n = Brace(rows_only, LEFT).shift(LEFT*0.4)
         label_n = brace_n.get_text("n données")
 
-        # Regrouper tout dans un seul bloc
+        # Regrouper tout dans un seul bloc 
         table_block = VGroup(table, brace_p, label_p, brace_n, label_n)
-
-        # Animation
-        self.play(FadeIn(table_block), run_time=2)
+        # --- Tableau apparait seul ---
+        self.play(FadeIn(table), run_time=2)
+        # --- Puis les accolades ---
+        self.play(GrowFromCenter(brace_p), FadeIn(label_p),
+                  GrowFromCenter(brace_n), FadeIn(label_n), run_time=2)
 
         self.wait(1)
 
         # --- 3) Tableau se réduit vers la gauche + flèche + graphe ---
-        self.play(table_block.animate.scale(0.7).to_edge(LEFT), 
-                  run_time=2)
+        self.play(table_block.animate.scale(0.7).to_edge(LEFT), run_time=2)
 
-        arrow = Arrow(table.get_right(), table.get_right() + RIGHT*3.5, buff=0.5, color=YELLOW)
-
+        arrow = Arrow(table_block.get_right(), table_block.get_right() + RIGHT*3, buff=0.5, color=YELLOW)
         self.play(GrowArrow(arrow), run_time=1)
 
-        # Graphe à droite du tableau (pas superposé à la flèche)
+        # Graphe à droite du tableau
         num_nodes = 10
         nodes = []
         positions = []
         radius = 2.0
-
-        # Placer les nœuds en cercle
         for k in range(num_nodes):
             theta = 2*np.pi*k/num_nodes
             x = radius*np.cos(theta) + 4.0
@@ -97,20 +95,19 @@ class IntroScene(Scene):
         nodes_group = VGroup(*nodes)
         self.play(FadeIn(nodes_group), run_time=2)
 
-        # Définir une liste fixe de connexions (non symétrique)
+        # Connexions fixes non symétriques
         connections = [
-            (0,1),(0,3),(0,7),(0, 6),      # nœud 0 relié à 3 voisins
-            (1,2),(1,5),            # nœud 1 relié à 2 voisins
-            (2,4),(2,8),(2,9),      # nœud 2 relié à 3 voisins
-            (3,6),(3,4),                  # nœud 3 relié à 2 voisins (0 et 6)
-            (4,5),(4,7),            # nœud 4 relié à 3 voisins
-            (5,9),                  # nœud 5 relié à 3 voisins (1,4,9)
-            (6,8),                  # nœud 6 relié à 2 voisins (3,8)
-            (7,9),                  # nœud 7 relié à 3 voisins (0,4,9)
-            (8,9)                   # nœud 8 relié à 3 voisins (2,6,9)
+            (0,1),(0,3),(0,7),(0,6),
+            (1,2),(1,5),
+            (2,4),(2,8),(2,9),
+            (3,6),(3,4),
+            (4,5),(4,7),
+            (5,9),
+            (6,8),
+            (7,9),
+            (8,9)
         ]
 
-        # Créer les arêtes
         edges = []
         for i,j in connections:
             e = Line(positions[i], positions[j], color=GREY_B, stroke_width=1)
@@ -119,42 +116,99 @@ class IntroScene(Scene):
         edges_group = VGroup(*edges)
         self.play(LaggedStartMap(Create, edges_group, lag_ratio=0.1, run_time=4))
 
-       
-
         self.wait(1)
 
-        # --- 4) Tableau et flèche disparaissent, graphe à gauche + loi et matrice à droite ---
+        # --- 4) Tableau et flèche disparaissent, graphe à gauche + loi ---
         self.play(FadeOut(table), FadeOut(brace_p), FadeOut(label_p),
                   FadeOut(brace_n), FadeOut(label_n), FadeOut(arrow), run_time=1)
 
         self.play(nodes_group.animate.shift(LEFT*8), edges_group.animate.shift(LEFT*8), run_time=2)
 
-
+        # Loi gaussienne
         law = MathTex("X \\sim \\mathcal{N}(\\mu, \\Sigma)", color=YELLOW)
-        law.to_edge(RIGHT, buff=3).shift(UP*0.5)
+        law.to_edge(RIGHT, buff=1.5).shift(UP*0.5)
+        self.play(Write(law), run_time=2)
+
+        # Flèche d’un nœud vers le X
+        arrow_to_X = Arrow(nodes[0].get_center(), law[0][0].get_center(), buff=0.5, color=YELLOW)
+        self.play(GrowArrow(arrow_to_X), run_time=1)
+
+        # Transformation du X en vecteur gènes
+        vector = MathTex("\\begin{bmatrix} g_1 \\\\ g_2 \\\\ \\vdots \\\\ g_p \\end{bmatrix}", color=YELLOW)
+        vector.move_to(law[0][0].get_center())
+        self.play(Transform(law[0][0], vector), run_time=2)
+        self.wait(2)
+        # Retour au X
+        X_symbol = MathTex("X", color=YELLOW).move_to(vector.get_center())
+        self.play(Transform(law[0][0], X_symbol), run_time=2)
+
+        # Flèche disparaît
+        self.play(FadeOut(arrow_to_X), run_time=1)
+
+        # Matrice apparait
         precision = MathTex("\\Omega = \\Sigma^{-1}", color=RED)
         precision.next_to(law, DOWN)
+        self.play(Write(precision), run_time=2)
+        # Matrice Sigma apparait en dessous
+        sigma_matrix = MathTex(
+            "\\Sigma = \\begin{bmatrix}"
+            "\\sigma_{11} & \\sigma_{12} & \\cdots & \\sigma_{1p} \\\\"
+            "\\sigma_{21} & \\sigma_{22} & \\cdots & \\sigma_{2p} \\\\"
+            "\\vdots & \\vdots & \\ddots & \\vdots \\\\"
+            "\\sigma_{p1} & \\sigma_{p2} & \\cdots & \\sigma_{pp}"
+            "\\end{bmatrix}",
+            color=WHITE
+        )
+        sigma_matrix.next_to(precision, DOWN*2)
+        arrow_sigma = Arrow(precision.get_bottom(), sigma_matrix.get_top(), buff=0.3, color=YELLOW)
+        self.play(GrowArrow(arrow_sigma), run_time=1)
+        self.play(Write(sigma_matrix), run_time=2)
 
-        self.play(Write(law), Write(precision), run_time=2)
+        start_point = sigma_matrix.get_corner(UL)
+        end_point = nodes_group.get_right() + RIGHT*0.5  # vise un peu avant le graphe
+        arrow_graph = Arrow(start_point, end_point, buff=0.2, color=RED)
+        self.play(GrowArrow(arrow_graph), run_time=1)
 
-        # --- 5) Réapparition tableau + flèche + graphe à droite + loi et matrice réduites en bas ---
-        law_small = law.copy().scale(0.7).to_edge(DOWN).shift(LEFT*2)
-        precision_small = precision.copy().scale(0.7).next_to(law_small, RIGHT)
 
-        self.play(FadeOut(law), FadeOut(precision), FadeIn(law_small), FadeIn(precision_small))
+        equivalence = MathTex(
+            "\\text{arête }(i,j) \\iff \\sigma_{ij} \\neq 0",
+            color=RED
+        ).scale(0.7)
+
+        equivalence.next_to(arrow_graph, UP, buff=0.2, aligned_edge=LEFT)
+        self.play(Write(equivalence), run_time=2)
+
+
+        self.wait(2)
+
+        self.play(
+            FadeOut(arrow_graph),
+            FadeOut(equivalence),
+            FadeOut(sigma_matrix),
+            FadeOut(arrow_sigma),
+            run_time=2
+        )
+
+        # --- 5) Mouvement fluide vers position centrée ---
+        self.play(
+            law.animate.scale(0.7).move_to(DOWN*3 + LEFT*2),
+            precision.animate.scale(0.7).move_to(DOWN*3 + LEFT*2+RIGHT*3),
+            run_time=2
+        )
 
         # Graphe revient à droite
         self.play(nodes_group.animate.to_edge(RIGHT), edges_group.animate.to_edge(RIGHT), run_time=2)
 
         # Tableau et flèche se replacent
-        self.play(FadeIn(table), FadeIn(brace_p), FadeIn(label_p),
-                  FadeIn(brace_n), FadeIn(label_n), FadeIn(arrow), run_time=2)
+        arrow = Arrow(table_block.get_right(), table_block.get_right() + RIGHT*3, buff=0.5, color=YELLOW)
+        self.play(FadeIn(table_block), FadeIn(arrow), run_time=2)
 
         # Point d’interrogation au-dessus de la flèche
         qm = Text("?", font_size=72, color=RED).next_to(arrow, UP, buff=0.5)
         self.play(FadeIn(qm), run_time=1)
 
         self.wait(2)
+
 
 
 # ------------------------------------------------------------
@@ -244,96 +298,3 @@ def draw_precision_matrix_with_zeros(p, font_size=28):
             label = Text(val, font_size=font_size, color=color).move_to(sq.get_center())
             labels.append(label)
     return VGroup(*squares, *labels)
-
-def highlight_precision_entries(precision_group, zero_color=GREEN, nz_color=ORANGE):
-    """
-    Create overlay rectangles on zeros and non-zeros in a precision matrix group.
-    Assumes Text labels "0" and "×" inside the group.
-    Returns (zero_rects, nonzero_rects) VGroups.
-    """
-    zero_rects = []
-    nonzero_rects = []
-    for mobj in precision_group:
-        if isinstance(mobj, Text):
-            val = mobj.text
-            if val == "0":
-                r = SurroundingRectangle(mobj, color=zero_color, buff=0.03)
-                zero_rects.append(r)
-            elif val == "×":
-                r = SurroundingRectangle(mobj, color=nz_color, buff=0.03)
-                nonzero_rects.append(r)
-    return VGroup(*zero_rects), VGroup(*nonzero_rects)
-
-def synthetic_nonzero_pairs(p, density=0.3):
-    """
-    Create synthetic undirected edge pairs representing nonzero off-diagonal entries.
-    """
-    pairs = []
-    for i in range(p):
-        for j in range(i+1, p):
-            if random.random() < density:
-                pairs.append((i, j))
-    return pairs
-
-def draw_edges_from_pairs(nodes, pairs, edge_color=GREY_B):
-    """
-    Draw edges for given pairs among nodes.
-    """
-    edges = []
-    for (i, j) in pairs:
-        e = Line(nodes[i].get_center(), nodes[j].get_center(), color=edge_color)
-        edges.append(e)
-    return VGroup(*edges)
-
-def apply_rule(pairs, rule="AND"):
-    """
-    Placeholder for neighborhood combination rule.
-    Since we don't have separate directional neighborhoods in this visual,
-    we just return the same pairs and tint differently to illustrate the idea.
-    """
-    # In real logic, 'AND' would intersect neighborhoods, 'OR' would union them.
-    return pairs
-
-def draw_data_matrix(n=20, p=6, font_size=24):
-    """
-    Draw a schematic data matrix X of shape (n x p).
-    """
-    cells = []
-    for i in range(n):
-        for j in range(p):
-            sq = Square(side_length=0.25, color=GREY_B)
-            sq.set_fill(GREY_E, opacity=0.2)
-            sq.move_to(np.array([0.3*(j - p/2), -0.24*(i - n/2), 0]))
-            cells.append(sq)
-    label = Text("X (n×p)", font_size=font_size, color=WHITE)
-    mat = VGroup(*cells).scale(1.1)
-    return VGroup(label.next_to(mat, UP), mat)
-
-def highlight_row_col(matrix_group, idx=0, nz_fraction=0.3):
-    """
-    Highlight entries in a row and column of a schematic matrix as if updating Ω.
-    """
-    rects = []
-    # Collect Text entries, estimate grid coordinates by their spatial positions
-    texts = [m for m in matrix_group if isinstance(m, Text)]
-    if not texts:
-        return VGroup()
-
-    # Infer positions to find the row/col for the given idx
-    # For simplicity we assume p = sqrt(len(texts)) (since we built square grid).
-    p = int(np.sqrt(len(texts)))
-    # Sort by y, then by x to create row-major ordering
-    texts_sorted = sorted(texts, key=lambda t: (-t.get_center()[1], t.get_center()[0]))
-    # Convert to 2D list
-    grid = [texts_sorted[i*p:(i+1)*p] for i in range(p)]
-
-    # Highlight row idx
-    for j in range(p):
-        r = SurroundingRectangle(grid[idx][j], color=ORANGE, buff=0.03)
-        rects.append(r)
-    # Highlight col idx
-    for i in range(p):
-        r = SurroundingRectangle(grid[i][idx], color=ORANGE, buff=0.03)
-        rects.append(r)
-
-    return VGroup(*rects)
