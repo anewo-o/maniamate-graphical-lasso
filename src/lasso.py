@@ -135,9 +135,124 @@ class LassoIntroduction(Scene):
                 r"\theta=(2,0)", 
                 font_size=DEFAULT_FONT_SIZE*0.6,
                 color=YELLOW
-            ).next_to(touch, DOWN, buff=0.2)
+            ).next_to(touch, LEFT, buff=0.2)
         )
         self.play(FadeIn(labels))
         self.wait(2)
 
+class LassoNeighborhood(Scene):
+    """
+    Neighborhood Graph Construction
+    """
+
+    def construct(self):
+        title = Tex("Sélection itérative de voisinages", color=BLUE)
+        self.play(Write(title))
+        self.wait(3)
+        self.play(title.animate.to_edge(UP))
+
+        ########################################################################
+        ### Initialisation du graphe ###########################################
+        ########################################################################
+
+        nodes = 8
+        graph = Graph(
+            vertices = list(range(nodes)),
+            edges=[],
+            layout="circular",
+            labels=True,
+            label_fill_color=BLUE,
+        )
+
+        self.play(Create(graph))
+        self.wait(0.5)
+        self.play(Unwrite(title), run_time=1)
+
+        ########################################################################
+        ### Voisinage de 0 #####################################################
+        ########################################################################
+
+        title = MathTex("ne_0", color=BLUE, font_size=DEFAULT_FONT_SIZE*2).to_edge(UP)
+        self.play(Write(title),
+                #   graph.animate.to_edge(LEFT, buff=DEFAULT_MOBJECT_TO_EDGE_BUFFER*4)
+        )
+
+        ne_0 = [(0, 1), (0, 2), (0, 4), (0, 7)]
+        for edge in ne_0:
+            graph.add_edges(edge)
+            self.play(Create(graph.edges[edge]))#, run_time=1)
+
+        # self.wait(2)
+        self.play(Unwrite(title))
+
+        ########################################################################
+        ### Voisinage de 1 #####################################################
+        ########################################################################
+
+        title = MathTex("ne_1", color=BLUE, font_size=DEFAULT_FONT_SIZE*2).to_edge(UP)
+        self.play(Write(title))
+
+        graph.add_edges((1,0), edge_config={"stroke_color":GREEN})
+        self.play(
+            ShowPassingFlash(
+                graph.edges[(1,0)].copy().set_stroke(width=DEFAULT_STROKE_WIDTH*3),
+                time_width=0.3,
+            ), FadeOut(graph.edges[(1,0)]),
+            run_time=3
+        )
+
+        ne_1 = [(1, 2), (1, 3), (1, 6)]
+        for edge in ne_1:
+            graph.add_edges(edge)
+            self.play(Create(graph.edges[edge]), run_time=1)
+
+        # self.wait(2)
+        self.play(Unwrite(title))
+
+        ########################################################################
+        ### Voisinage de 2 #####################################################
+        ########################################################################
+
+        title = MathTex("ne_2", color=BLUE, font_size=DEFAULT_FONT_SIZE*2).to_edge(UP)
+        self.play(Write(title))
+
+        graph.add_edges((2,1), edge_config={"stroke_color":GREEN})
+        self.play(
+            ShowPassingFlash(
+                graph.edges[(2,1)].copy().set_stroke(width=DEFAULT_STROKE_WIDTH*3),
+                time_width=0.3
+            ),
+            run_time=3
+        )
+
+        graph.add_edges((2,0), edge_config={"stroke_color":RED})
+        self.play(
+            ShowPassingFlash(
+                graph.edges[(2,0)].copy().set_stroke(width=DEFAULT_STROKE_WIDTH*3),
+                time_width=0.3
+            ),
+            run_time=3
+        )
+
+        ne_2 = [(2, 4), (2, 5), (2, 7)]
+        for edge in ne_2:
+            graph.add_edges(edge)
+            self.play(Create(graph.edges[edge]), run_time=1)
+
+        # self.wait(2)
+        self.play(Unwrite(title))
+
+        ########################################################################
+        ### Voisinages restants ################################################
+        ########################################################################
+
+        title = MathTex("...", color=BLUE, font_size=DEFAULT_FONT_SIZE*2).to_edge(UP)
+        self.play(Write(title))
+
+        ne_ = [(3,6), (7,5), (6,4)]
+        for edge in ne_:
+            graph.add_edges(edge)
+            self.play(Create(graph.edges[edge]), run_time=1)
+
+        # self.wait(2)
 
