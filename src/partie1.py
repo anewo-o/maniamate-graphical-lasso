@@ -135,21 +135,88 @@ class Partie1Scene(Scene):
 
         self.wait(1)
 
+        #--- Nettoyage avant exemple ---    
+        self.play(FadeOut(likelihood), FadeOut(formulas), run_time=1.5)
+
+        #---- Exemple N=5, P=2 ----
+        #-----------donées à gauche (n, p et X)-----------
+        X_matrix = MathTex(
+            "X = \\begin{bmatrix}"
+            "n_{11} & n_{12} \\\\"
+            "n_{21} & n_{22} \\\\"
+            "n_{31} & n_{32} \\\\"
+            "n_{41} & n_{42} \\\\"
+            "n_{51} & n_{52}"
+            "\\end{bmatrix}"
+        ).scale(0.9)
+        n_text = Text("n = 5 observations", font_size=28, color=WHITE)
+        p_text = Text("p = 2 variables", font_size=28, color=WHITE)
+        data_group = VGroup(n_text, p_text, X_matrix).arrange(DOWN, buff=0.4)
+        data_group.to_edge(LEFT).shift(UP*0.5)
+        self.play(FadeIn(data_group), run_time=2)
+
+        # --- Sigma chapeau avec X développé ---
+        sigma_hat_2 = MathTex(
+            "\\hat{\\Sigma} = \\tfrac{1}{5} X^T X = "
+            "\\begin{bmatrix}"
+            "\\sigma_{11} & \\sigma_{12} \\\\"
+            "\\sigma_{21} & \\sigma_{22}"
+            "\\end{bmatrix}"
+        ).scale(0.9)
+
+        sigma_hat_2.to_edge(RIGHT).shift(UP*1.5)
+        self.play(Write(sigma_hat_2), run_time=3)
+
+        # --- Flèche vers le bas ---
+        arrow_down = Arrow(
+            sigma_hat_2.get_bottom(),
+            sigma_hat_2.get_bottom() + DOWN*1.5,
+            buff=0.2,
+            color=YELLOW
+        )
+        self.play(GrowArrow(arrow_down), run_time=1.5)
+
+        # --- Omega = Sigma^-1 ---
+        omega = MathTex("\\Omega = \\hat{\\Sigma}^{-1}", color=GREEN).scale(0.9)
+        omega.next_to(arrow_down, DOWN, buff=0.5)
+        self.play(Write(omega), run_time=2)
+        self.wait(2)
+
+        # Nettoyage de l'exemple 
+        self.play(FadeOut(data_group), run_time=1.5)
+        self.play(FadeOut(sigma_hat_2), FadeOut(arrow_down), FadeOut(omega), run_time=1.5)
+        #--- Retour aux formules du MLE ---
+
+        # remise des formules au centre
+        self.play(Write(likelihood), run_time=3)
+        self.play(Write(mu_hat), run_time=1.5)
+        self.play(Write(sigma_hat), run_time=1.5)
+
         # --- Déplacement du bloc vers la gauche ---
         self.play(formulas.animate.to_edge(LEFT).shift(DOWN*0.5), run_time=2)
         self.wait(1)
-        # --- Encadré "Problématique" à droite ---
-        problematique_text = VGroup(
+        # Définition des lignes
+        problematique_lines = [
             Text("Problématique", font_size=32, color=RED),
-            MathTex("Taille\\  de\\ \\hat{\\Sigma} = p \\times p", font_size=28, color=WHITE),
+            MathTex("Taille\\ de\\ \\hat{\\Sigma} = p \\times p", font_size=28, color=WHITE),
             MathTex("Rang\\ de\\ \\hat{\\Sigma} = n", font_size=28, color=WHITE),
-            MathTex("Or\\  n << p  \\rightarrow  \\hat{\\Sigma}\\  non-inversible", font_size=28, color=YELLOW)
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
+            MathTex("Or\\ n \\ll p \\Rightarrow \\hat{\\Sigma}\\ \\text{ non inversible}", font_size=28, color=YELLOW)
+        ]
 
+        # Regroupement en colonne
+        problematique_text = VGroup(*problematique_lines).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
         problematique_text.to_edge(RIGHT).shift(DOWN*0.5)
-        box = SurroundingRectangle(problematique_text, color=RED, buff=0.3)
-        problematique_group = VGroup(problematique_text, box)
 
-        self.play(FadeIn(problematique_group), run_time=2)
+        # Rectangle autour
+        box = SurroundingRectangle(problematique_text, color=RED, buff=0.3)
+
+        # Animation ligne par ligne
+        for line in problematique_text:
+            self.play(FadeIn(line), run_time=1.2)
+            self.wait(0.3)
+
+        # Puis apparition du rectangle
+        self.play(Create(box), run_time=1.5)
+
 
         self.wait(3)
